@@ -1,17 +1,33 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Network Permissions (For RTMP Streaming & YouTube API) -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- Audio Recording Permission (For Microphone) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+
+    <!-- Foreground Service Permissions (To keep stream alive in background) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/> 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <!-- Storage Permissions (For picking Avatar Video) -->
+    <!-- Android 12 and below -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    
+    <!-- Android 13 and above (Granular Permissions) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
     <application
         android:label="DeathNote Streamer"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:requestLegacyExternalStorage="true">
         
-        <!-- Added Flutter V2 Embedding Metadata -->
+        <!-- REQUIRED FOR FLUTTER 3.x: Explicitly declare V2 Embedding -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

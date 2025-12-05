@@ -18,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _videoIdController = TextEditingController();
   
   Timer? _timer;
-  ChatService? _chatService; // Keep this nullable
+  ChatService? _chatService;
 
   @override
   void dispose() {
@@ -73,26 +73,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _startChatPolling(AppState appState, String apiKey, String videoId) async {
     appState.setPolling(true);
-    
-    // Initialize Chat Service (No constructor arguments needed based on your service code)
-    // If you need to pass API key, modify ChatService, but for now we pass it to methods directly
     _chatService = ChatService(); 
 
-    // Verify Chat ID
-    // Note: ensure your ChatService has this method. If not, we skip validation for now.
-    // For this fix, I will assume simple fetching loop:
-    
     _timer = Timer.periodic(Duration(seconds: 5), (timer) async {
       if (!appState.isPolling) {
         timer.cancel();
         return;
       }
 
-      // Fetch messages
       List<String> names = await ChatService.fetchChatMessages(videoId, apiKey);
-      
       for (String name in names) {
-         // Add to queue if not duplicate/already processed logic (simplified here)
          if (!appState.names.contains(name)) {
             appState.addName(name);
          }
@@ -104,62 +94,81 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
 
+    // If streaming, hide the AppBar to give full screen to content
     return Scaffold(
-      appBar: AppBar(title: Text("Death Note Streamer")),
-      body: Column(
-        children: [
-          // Inputs Area
-          if (!appState.isStreaming)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+      appBar: appState.isStreaming ? null : AppBar(title: Text("Death Note Streamer")),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Controls Area (Only visible when NOT streaming)
+            if (!appState.isStreaming)
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                color: Colors.grey[900], // Dark background for controls
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, // Takes minimal space
+                  children: [
+                    TextField(
+                      controller: _apiKeyController,
+                      decoration: InputDecoration(labelText: "YouTube API Key"),
+                    ),
+                    TextField(
+                      controller: _videoIdController,
+                      decoration: InputDecoration(labelText: "Video ID (Live Stream)"),
+                    ),
+                    TextField(
+                      controller: _streamKeyController,
+                      decoration: InputDecoration(labelText: "RTMP Stream Key"),
+                      obscureText: true,
+                    ),
+                    SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () => _toggleStreaming(appState),
+                      child: Text("Start Ritual (Stream)"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                    )
+                  ],
+                ),
+              ),
+
+            // Main Split Screen Area
+            // We use Flexible instead of Expanded here if controls are visible
+            // to allow controls to push content down.
+            Expanded(
               child: Column(
                 children: [
-                  TextField(
-                    controller: _apiKeyController,
-                    decoration: InputDecoration(labelText: "YouTube API Key"),
+                  // Upper Part: Death Note Animation (55%)
+                  Expanded(
+                    flex: 55, 
+                    child: DeathNoteArea()
                   ),
-                  TextField(
-                    controller: _videoIdController,
-                    decoration: InputDecoration(labelText: "Video ID (Live Stream)"),
+                  
+                  // Lower Part: Avatar Video (45%)
+                  Expanded(
+                    flex: 45, 
+                    child: AvatarArea()
                   ),
-                  TextField(
-                    controller: _streamKeyController,
-                    decoration: InputDecoration(labelText: "RTMP Stream Key"),
-                    obscureText: true,
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () => _toggleStreaming(appState),
-                    child: Text("Start Ritual (Stream)"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                  )
                 ],
               ),
             ),
-
-          // Main Visual Area (Always visible, but active when streaming)
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(flex: 1, child: DeathNoteArea()),
-                Expanded(flex: 1, child: AvatarArea()),
-              ],
-            ),
-          ),
-          
-          if (appState.isStreaming)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () => _toggleStreaming(appState),
-                child: Text("Stop Ritual"),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
-              ),
-            )
-        ],
+            
+            // Stop Button overlay (Only visible when streaming)
+            if (appState.isStreaming)
+              Container(
+                width: double.infinity,
+                color: Colors.black,
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
+                  onPressed: () => _toggleStreaming(appState),
+                  child: Text("Stop Ritual"),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+                ),
+              )
+          ],
+        ),
       ),
     );
   }
