@@ -1,3 +1,8 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:video_player/video_player.dart';
+
 class AvatarArea extends StatefulWidget {
   @override
   _AvatarAreaState createState() => _AvatarAreaState();
@@ -8,7 +13,6 @@ class _AvatarAreaState extends State<AvatarArea> {
 
   Future<void> _pickVideo() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.video);
-
     if (result != null) {
       File file = File(result.files.single.path!);
       _controller = VideoPlayerController.file(file)
@@ -36,14 +40,13 @@ class _AvatarAreaState extends State<AvatarArea> {
             Text("Select Avatar Video", style: TextStyle(color: Colors.white)),
           
           Positioned(
-            bottom: 10,
-            right: 10,
+            bottom: 20,
+            right: 20,
             child: FloatingActionButton(
-              mini: true,
               onPressed: _pickVideo,
               child: Icon(Icons.video_library),
             ),
-          )
+          ),
         ],
       ),
     );

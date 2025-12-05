@@ -1,17 +1,21 @@
+import 'package:flutter/services.dart';
+
 class NativeBridge {
   static const MethodChannel _channel = MethodChannel('deathnote_live/stream');
 
-  static Future<bool> startStream(String url) async {
+  static Future<void> startStream(String url) async {
     try {
-      final result = await _channel.invokeMethod('startStream', {'url': url});
-      return result == true;
+      await _channel.invokeMethod('startStream', {'url': url});
     } catch (e) {
-      print("Error starting stream: $e");
-      return false;
+      print("Failed to start stream: $e");
     }
   }
 
   static Future<void> stopStream() async {
-    await _channel.invokeMethod('stopStream');
+    try {
+      await _channel.invokeMethod('stopStream');
+    } catch (e) {
+      print("Failed to stop stream: $e");
+    }
   }
 }

@@ -6,24 +6,24 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.pedro.library.rtmp.RtmpDisplay
+import com.pedro.rtplibrary.rtmp.RtmpDisplay
 import com.pedro.rtmp.utils.ConnectCheckerRtmp
 
 class StreamService : Service(), ConnectCheckerRtmp {
 
-    private lateinit var rtmpDisplay: RtmpDisplay
+    private var rtmpDisplay: RtmpDisplay? = null
     private val CHANNEL_ID = "StreamingChannel"
     private val NOTIFICATION_ID = 12345
 
     override fun onCreate() {
         super.onCreate()
-        rtmpDisplay = RtmpDisplay(baseContext, true, this)
         createNotificationChannel()
+        // Initialize the library
+        rtmpDisplay = RtmpDisplay(baseContext, true, this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -50,18 +50,21 @@ class StreamService : Service(), ConnectCheckerRtmp {
     }
 
     private fun startStream(code: Int, data: Intent, endpoint: String) {
-        if (!rtmpDisplay.isStreaming) {
-            // Setup 1080p, 30fps, 4Mbps
-            rtmpDisplay.setIntentResult(code, data)
-            if (rtmpDisplay.prepareAudio() && rtmpDisplay.prepareVideo(1080, 1920, 30, 4000 * 1024, 320, 44100)) {
-                rtmpDisplay.startStream(endpoint)
+        if (rtmpDisplay?.isStreaming == false) {
+            // Setup 720p (1280x720), 30fps, 4Mbps bitrate
+            rtmpDisplay?.setIntentResult(code, data)
+            if (rtmpDisplay?.prepareAudio() == true && 
+                rtmpDisplay?.prepareVideo(1280, 720, 30, 4000 * 1024, 320, 0) == true) {
+                rtmpDisplay?.startStream(endpoint)
+            } else {
+                Log.e("StreamService", "Error preparing stream, check resolution/bitrate")
             }
         }
     }
 
     private fun stopStream() {
-        if (rtmpDisplay.isStreaming) {
-            rtmpDisplay.stopStream()
+        if (rtmpDisplay?.isStreaming == true) {
+            rtmpDisplay?.stopStream()
         }
     }
 
@@ -76,9 +79,16 @@ class StreamService : Service(), ConnectCheckerRtmp {
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("DeathNote Live")
-            .setContentText("Writing names to the server...")
+            .setContentText("Ritual in progress (Streaming)...")
             .setSmallIcon(android.R.drawable.ic_menu_camera)
             .build()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (rtmpDisplay?.isStreaming == true) {
+            rtmpDisplay?.stopStream()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -91,5 +101,3 @@ class StreamService : Service(), ConnectCheckerRtmp {
     override fun onAuthErrorRtmp() {}
     override fun onAuthSuccessRtmp() {}
 }
-
-5. Flutter Implementation

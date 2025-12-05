@@ -1,39 +1,57 @@
+import 'package:flutter/foundation.dart';
+
 class AppState extends ChangeNotifier {
-  final List<String> _nameQueue = [];
-  String? _currentName;
-  bool _isStreaming = false;
+  bool _isPolling = false;
+  bool _isStreaming = false; // Added this
+  String _streamKey = '';
+  String _apiKey = '';
+  String _videoId = '';
+  List<String> _names = []; // Store chat names here
 
-  List<String> get nameQueue => _nameQueue;
-  String? get currentName => _currentName;
-  bool get isStreaming => _isStreaming;
+  // Getters
+  bool get isPolling => _isPolling;
+  bool get isStreaming => _isStreaming; // Added this
+  String get streamKey => _streamKey;
+  String get apiKey => _apiKey;
+  String get videoId => _videoId;
+  List<String> get names => _names;
 
-  void setStreaming(bool val) {
-    _isStreaming = val;
+  // Setters
+  void setPolling(bool value) {
+    _isPolling = value;
     notifyListeners();
   }
 
-  void addName(String name) {
-    // Basic deduplication and profanity filter placeholder
-    if (!_nameQueue.contains(name) && name.trim().isNotEmpty) {
-      _nameQueue.add(name);
-      if (_currentName == null) {
-        processNextName();
-      }
-      notifyListeners();
-    }
+  void setStreaming(bool value) { // Added this
+    _isStreaming = value;
+    notifyListeners();
   }
 
-  void processNextName() {
-    if (_nameQueue.isNotEmpty) {
-      _currentName = _nameQueue.removeAt(0);
-      notifyListeners();
-    } else {
-      _currentName = null;
-      notifyListeners();
-    }
+  void updateStreamKey(String value) {
+    _streamKey = value;
+    notifyListeners();
+  }
+
+  void updateApiKey(String value) {
+    _apiKey = value;
+    notifyListeners();
+  }
+
+  void updateVideoId(String value) {
+    _videoId = value;
+    notifyListeners();
+  }
+
+  void addName(String name) { // Added this
+    _names.add(name);
+    notifyListeners();
   }
 
   void finishedWriting() {
-    processNextName();
+    // Logic to handle when writing animation finishes (e.g., remove name from queue)
+    if (_names.isNotEmpty) {
+      _names.removeAt(0);
+      notifyListeners();
+    }
   }
 }
