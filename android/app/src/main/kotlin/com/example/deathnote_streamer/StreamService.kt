@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
@@ -22,7 +21,6 @@ class StreamService : Service(), ConnectCheckerRtmp {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        // Initialize the library
         rtmpDisplay = RtmpDisplay(baseContext, true, this)
     }
 
@@ -51,14 +49,17 @@ class StreamService : Service(), ConnectCheckerRtmp {
 
     private fun startStream(code: Int, data: Intent, endpoint: String) {
         if (rtmpDisplay?.isStreaming == false) {
-            // Setup 720p (1280x720), 30fps, 4Mbps bitrate
-            // This is safer than 1080p for mobile data
             rtmpDisplay?.setIntentResult(code, data)
+            
+            // 1080p Portrait @ 6Mbps
             if (rtmpDisplay?.prepareAudio() == true && 
-                rtmpDisplay?.prepareVideo(1280, 720, 30, 4000 * 1024, 320, 0) == true) {
+                rtmpDisplay?.prepareVideo(1080, 1920, 30, 6000 * 1024, 320, 0) == true) {
+                
                 rtmpDisplay?.startStream(endpoint)
+                Log.d("StreamService", "Stream started at 1080x1920 @ 6Mbps")
+                
             } else {
-                Log.e("StreamService", "Error preparing stream, check resolution/bitrate")
+                Log.e("StreamService", "Error preparing stream.")
             }
         }
     }
@@ -80,7 +81,7 @@ class StreamService : Service(), ConnectCheckerRtmp {
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("DeathNote Live")
-            .setContentText("Ritual in progress (Streaming)...")
+            .setContentText("Ritual in progress...")
             .setSmallIcon(android.R.drawable.ic_menu_camera)
             .build()
     }

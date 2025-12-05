@@ -1,10 +1,10 @@
 import 'dart:math';
-import 'dart:ui'; // Required for ImageFilter
+import 'dart:ui'; 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart'; 
 import '../providers/app_state.dart';
 
-// Expanded list of animation styles
 enum AnimationStyle { typewriter, fadeIn, scale, blur, slide, spacing }
 
 class DeathNoteArea extends StatefulWidget {
@@ -14,6 +14,11 @@ class DeathNoteArea extends StatefulWidget {
 
 class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateMixin {
   late AnimationController _controller;
+  
+  // Audio Players
+  late AudioPlayer _sfxPlayer; 
+  late AudioPlayer _bgmPlayer; 
+  
   String name = "Death Note"; 
   AnimationStyle _currentStyle = AnimationStyle.typewriter;
 
@@ -21,6 +26,30 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: Duration(seconds: 4));
+    _controller.value = 0.0; 
+
+    // Initialize Audio Players
+    _sfxPlayer = AudioPlayer();
+    _bgmPlayer = AudioPlayer();
+    
+    _initAudio();
+  }
+
+  void _initAudio() async {
+    // 1. Setup Scribble Sound
+    await _sfxPlayer.setVolume(1.0);
+
+    // 2. Setup Background Music
+    try {
+      await _bgmPlayer.setReleaseMode(ReleaseMode.loop); // Loop forever
+      
+      // CHANGED: Increased volume to 0.4 (40%)
+      await _bgmPlayer.setVolume(0.4); 
+      
+      await _bgmPlayer.play(AssetSource('sounds/theme.mp3')); 
+    } catch(e) {
+      print("BGM Error: $e");
+    }
   }
 
   @override
@@ -28,22 +57,25 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
     super.didChangeDependencies();
     final appState = Provider.of<AppState>(context);
     
-    // Trigger writing if polling is active and queue has names
     if (appState.isPolling && appState.names.isNotEmpty) {
        _startWriting(appState.names.last);
     }
   }
 
-  void _startWriting(String targetName) {
+  void _startWriting(String targetName) async {
     setState(() {
       name = targetName;
-      // Randomly pick one of the 6 styles
       _currentStyle = AnimationStyle.values[Random().nextInt(AnimationStyle.values.length)];
     });
 
+    try {
+      await _sfxPlayer.stop(); 
+      await _sfxPlayer.play(AssetSource('sounds/scribble.mp3'));
+    } catch (e) {}
+
     _controller.reset();
-    _controller.forward().then((_) {
-        // Notify app state when animation completes
+    _controller.forward().then((_) async {
+        try { await _sfxPlayer.stop(); } catch(e) {}
         Provider.of<AppState>(context, listen: false).finishedWriting();
     });
   }
@@ -52,8 +84,19 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: Colors.black,
       padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Color(0xFF1A1A1A), 
+        gradient: RadialGradient(
+          center: Alignment.center,
+          radius: 1.2, 
+          colors: [
+            Color(0xFF252525), 
+            Color(0xFF000000), 
+          ],
+          stops: [0.3, 1.0],
+        ),
+      ),
       child: CustomPaint(
         painter: NotebookPainter(),
         child: Center(
@@ -70,51 +113,46 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
 
   Widget _buildAnimatedText() {
     TextStyle baseStyle = TextStyle(
-      fontFamily: 'DeathNote', // The custom handwriting font
-      fontSize: 40,
-      color: Colors.white,
+      fontFamily: 'DeathNote', 
+      fontSize: 50, 
+      color: Colors.white.withOpacity(0.95), 
       fontStyle: FontStyle.italic,
-      shadows: [Shadow(color: Colors.red, blurRadius: 10)],
+      shadows: [
+        Shadow(color: Colors.black, blurRadius: 15, offset: Offset(0, 0)) 
+      ],
     );
 
     switch (_currentStyle) {
       case AnimationStyle.typewriter:
-        // Classic Death Note: Letters appear one by one
         int length = (name.length * _controller.value).toInt();
         if (length > name.length) length = name.length;
         return Text(name.substring(0, length), style: baseStyle);
 
       case AnimationStyle.fadeIn:
-        // Ghostly: Fades in from 0 to 1
         return Opacity(
           opacity: _controller.value,
           child: Text(name, style: baseStyle),
         );
 
       case AnimationStyle.scale:
-        // Dramatic: Zooms in from nothing
         return Transform.scale(
           scale: _controller.value,
           child: Text(name, style: baseStyle),
         );
 
       case AnimationStyle.blur:
-        // Mystery: Starts blurry, becomes clear
-        // Blur value goes from 10.0 down to 0.0
         double blurValue = (1 - _controller.value) * 10;
         return ImageFiltered(
           imageFilter: ImageFilter.blur(sigmaX: blurValue, sigmaY: blurValue),
           child: Opacity(
-            // Also fade in slightly so it's not a blocky blur at start
             opacity: _controller.value.clamp(0.2, 1.0), 
             child: Text(name, style: baseStyle),
           ),
         );
 
       case AnimationStyle.slide:
-        // Rising: Slides up from the bottom + Fades in
         return Transform.translate(
-          offset: Offset(0, 50 * (1 - _controller.value)), // Move UP as controller increases
+          offset: Offset(0, 50 * (1 - _controller.value)), 
           child: Opacity(
             opacity: _controller.value,
             child: Text(name, style: baseStyle),
@@ -122,13 +160,10 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
         );
 
       case AnimationStyle.spacing:
-        // Cinematic: Letters start close and spread out slightly
         return Text(
           name, 
           style: baseStyle.copyWith(
-            // Letter spacing increases from -5 to 2
             letterSpacing: -5 + (7 * _controller.value),
-            // Fade in as well
             color: Colors.white.withOpacity(_controller.value)
           )
         );
@@ -141,6 +176,8 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
   @override
   void dispose() {
     _controller.dispose();
+    _sfxPlayer.dispose();
+    _bgmPlayer.dispose(); 
     super.dispose();
   }
 }
@@ -149,10 +186,10 @@ class NotebookPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.2)
+      ..color = Colors.white.withOpacity(0.08) 
       ..strokeWidth = 1;
 
-    for (double i = 40; i < size.height; i += 40) {
+    for (double i = 60; i < size.height; i += 60) {
       canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
     }
   }
