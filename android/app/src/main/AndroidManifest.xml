@@ -1,4 +1,3 @@
-android/app/src/main/AndroidManifest.xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -11,6 +10,11 @@ android/app/src/main/AndroidManifest.xml
     <application
         android:label="DeathNote Streamer"
         android:icon="@mipmap/ic_launcher">
+        
+        <!-- Added Flutter V2 Embedding Metadata -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
         
         <activity
             android:name=".MainActivity"
@@ -33,5 +37,3 @@ android/app/src/main/AndroidManifest.xml
             android:exported="false"/>
     </application>
 </manifest>
-
-4. Native Kotlin Implementation
