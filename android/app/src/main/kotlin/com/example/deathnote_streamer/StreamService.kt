@@ -52,6 +52,7 @@ class StreamService : Service(), ConnectCheckerRtmp {
     private fun startStream(code: Int, data: Intent, endpoint: String) {
         if (rtmpDisplay?.isStreaming == false) {
             // Setup 720p (1280x720), 30fps, 4Mbps bitrate
+            // This is safer than 1080p for mobile data
             rtmpDisplay?.setIntentResult(code, data)
             if (rtmpDisplay?.prepareAudio() == true && 
                 rtmpDisplay?.prepareVideo(1280, 720, 30, 4000 * 1024, 320, 0) == true) {
@@ -93,11 +94,27 @@ class StreamService : Service(), ConnectCheckerRtmp {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    // ConnectCheckerRtmp Interface
-    override fun onConnectionSuccessRtmp() { Log.d("StreamService", "Connected") }
-    override fun onConnectionFailedRtmp(reason: String) { Log.e("StreamService", "Failed: $reason") }
+    // --- ConnectCheckerRtmp Interface Implementation ---
+    
+    override fun onConnectionStartedRtmp(rtmpUrl: String) {
+        Log.d("StreamService", "Connection Started: $rtmpUrl")
+    }
+
+    override fun onConnectionSuccessRtmp() { 
+        Log.d("StreamService", "Connected") 
+    }
+    
+    override fun onConnectionFailedRtmp(reason: String) { 
+        Log.e("StreamService", "Failed: $reason") 
+    }
+    
     override fun onNewBitrateRtmp(bitrate: Long) {}
-    override fun onDisconnectRtmp() { Log.d("StreamService", "Disconnected") }
+    
+    override fun onDisconnectRtmp() { 
+        Log.d("StreamService", "Disconnected") 
+    }
+    
     override fun onAuthErrorRtmp() {}
+    
     override fun onAuthSuccessRtmp() {}
 }

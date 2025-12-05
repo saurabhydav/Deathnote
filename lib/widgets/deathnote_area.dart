@@ -10,22 +10,25 @@ class DeathNoteArea extends StatefulWidget {
 class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<int> _textAnimation;
-  String name = "Target Name"; // Placeholder
+  String name = "Death Note"; // Default text
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: Duration(seconds: 4));
+    
+    // FIX: We must initialize this immediately to prevent the "LateInitializationError" crash
+    _textAnimation = IntTween(begin: 0, end: 0).animate(_controller);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final appState = Provider.of<AppState>(context);
-    // You can listen to appState here if needed to trigger animations
-    if (appState.isPolling) {
-       // logic to start writing
-       _startWriting(name);
+    
+    // If we are polling (streaming) and have names in the queue, start writing
+    if (appState.isPolling && appState.names.isNotEmpty) {
+       _startWriting(appState.names.last);
     }
   }
 
@@ -37,6 +40,7 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
       );
     });
     _controller.forward().then((_) {
+        // When animation finishes, tell AppState we are done
         Provider.of<AppState>(context, listen: false).finishedWriting();
         _controller.reset();
     });
@@ -54,11 +58,16 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
           child: AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
-              String currentText = name.substring(0, _textAnimation.value);
+              // Safety check to ensure we don't crash if text length changes
+              int length = _textAnimation.value;
+              if (length > name.length) length = name.length;
+              
+              String currentText = name.substring(0, length);
+              
               return Text(
                 currentText,
                 style: TextStyle(
-                  fontFamily: 'DeathNote', // Make sure this font is in pubspec.yaml
+                  // fontFamily: 'DeathNote', // Uncomment if you added the font file
                   fontSize: 40,
                   color: Colors.white,
                   fontStyle: FontStyle.italic,
