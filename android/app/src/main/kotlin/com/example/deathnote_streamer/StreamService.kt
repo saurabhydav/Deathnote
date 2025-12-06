@@ -51,12 +51,16 @@ class StreamService : Service(), ConnectCheckerRtmp {
         if (rtmpDisplay?.isStreaming == false) {
             rtmpDisplay?.setIntentResult(code, data)
             
-            // 1080p Portrait @ 6Mbps
+            // --- OPTIMIZED FOR LONG SESSIONS ---
+            // Resolution: 1080x1920 (Full HD Portrait)
+            // FPS: 24 (Cinematic, lower CPU load)
+            // Bitrate: 4500 Kbps (4.5 Mbps) - Good balance for heat/quality
+            // ------------------------
             if (rtmpDisplay?.prepareAudio() == true && 
-                rtmpDisplay?.prepareVideo(1080, 1920, 30, 6000 * 1024, 320, 0) == true) {
+                rtmpDisplay?.prepareVideo(1080, 1920, 24, 4500 * 1024, 320, 0) == true) {
                 
                 rtmpDisplay?.startStream(endpoint)
-                Log.d("StreamService", "Stream started at 1080x1920 @ 6Mbps")
+                Log.d("StreamService", "Stream started at 1080x1920 @ 24fps 4.5Mbps")
                 
             } else {
                 Log.e("StreamService", "Error preparing stream.")

@@ -1,0 +1,8 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Ghost">
+<path id="Body" d="M100 20C60 20 30 50 30 90V160C30 170 40 180 50 170L70 150L90 170L110 150L130 170L150 150L170 170C180 180 190 170 190 160V90C190 50 160 20 120 20H100Z" fill="white" fill-opacity="0.9"/>
+<circle id="EyeLeft" cx="70" cy="80" r="10" fill="black"/>
+<circle id="EyeRight" cx="130" cy="80" r="10" fill="black"/>
+<ellipse id="Mouth" cx="100" cy="110" rx="15" ry="20" fill="black"/>
+</g>
+</svg>
