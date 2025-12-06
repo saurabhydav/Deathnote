@@ -51,19 +51,18 @@ class StreamService : Service(), ConnectCheckerRtmp {
         if (rtmpDisplay?.isStreaming == false) {
             rtmpDisplay?.setIntentResult(code, data)
             
-            // --- OPTIMIZED FOR LONG SESSIONS ---
-            // Resolution: 1080x1920 (Full HD Portrait)
-            // FPS: 24 (Cinematic, lower CPU load)
-            // Bitrate: 4500 Kbps (4.5 Mbps) - Good balance for heat/quality
-            // ------------------------
+            // --- SAFE MODE: 720p 30FPS ---
+            // Resolution: 720x1280 (Portrait HD)
+            // Bitrate: 2.5 Mbps (2500 * 1024)
+            // FPS: 30
             if (rtmpDisplay?.prepareAudio() == true && 
-                rtmpDisplay?.prepareVideo(1080, 1920, 24, 4500 * 1024, 320, 0) == true) {
+                rtmpDisplay?.prepareVideo(720, 1280, 30, 2500 * 1024, 2, 0) == true) {
                 
                 rtmpDisplay?.startStream(endpoint)
-                Log.d("StreamService", "Stream started at 1080x1920 @ 24fps 4.5Mbps")
+                Log.d("StreamService", "Stream started at 720x1280 @ 2.5Mbps")
                 
             } else {
-                Log.e("StreamService", "Error preparing stream.")
+                Log.e("StreamService", "Error: Phone hardware rejected settings.")
             }
         }
     }
@@ -85,7 +84,7 @@ class StreamService : Service(), ConnectCheckerRtmp {
     private fun createNotification(): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("DeathNote Live")
-            .setContentText("Ritual in progress...")
+            .setContentText("Broadcasting...")
             .setSmallIcon(android.R.drawable.ic_menu_camera)
             .build()
     }
@@ -99,27 +98,12 @@ class StreamService : Service(), ConnectCheckerRtmp {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    // --- ConnectCheckerRtmp Interface Implementation ---
-    
-    override fun onConnectionStartedRtmp(rtmpUrl: String) {
-        Log.d("StreamService", "Connection Started: $rtmpUrl")
-    }
-
-    override fun onConnectionSuccessRtmp() { 
-        Log.d("StreamService", "Connected") 
-    }
-    
-    override fun onConnectionFailedRtmp(reason: String) { 
-        Log.e("StreamService", "Failed: $reason") 
-    }
-    
+    // --- ConnectCheckerRtmp Interface ---
+    override fun onConnectionStartedRtmp(rtmpUrl: String) { Log.d("StreamService", "Connecting...") }
+    override fun onConnectionSuccessRtmp() { Log.d("StreamService", "Connected to YouTube!") }
+    override fun onConnectionFailedRtmp(reason: String) { Log.e("StreamService", "Failed: $reason") }
     override fun onNewBitrateRtmp(bitrate: Long) {}
-    
-    override fun onDisconnectRtmp() { 
-        Log.d("StreamService", "Disconnected") 
-    }
-    
-    override fun onAuthErrorRtmp() {}
-    
-    override fun onAuthSuccessRtmp() {}
+    override fun onDisconnectRtmp() { Log.d("StreamService", "Disconnected") }
+    override fun onAuthErrorRtmp() { Log.e("StreamService", "Auth Error") }
+    override fun onAuthSuccessRtmp() { Log.d("StreamService", "Auth Success") }
 }

@@ -53,9 +53,13 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
 
   List<String> _writtenNames = []; 
   String? _currentWritingName; 
-  final int _maxLinesPerPage = 5; 
+  
+  // --- LAYOUT CONTROLS ---
+  // Only 4 lines to ensure it NEVER reaches the bottom
+  final int _maxLinesPerPage = 4; 
+  // Adjusted line height and start position
   final double _lineHeight = 60.0; 
-  final double _startTopPosition = 60.0; 
+  final double _startTopPosition = 80.0; 
 
   AnimationStyle _currentStyle = AnimationStyle.typewriter;
   bool _isWriting = false;
@@ -111,20 +115,11 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
   void _initAudio() async {
     await _sfxPlayer.setVolume(1.0);
     await _pageSfxPlayer.setVolume(1.0);
-    
-    // BACKGROUND MUSIC SETUP
     try {
-      await _bgmPlayer.setReleaseMode(ReleaseMode.loop); // Set to loop
+      await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
       await _bgmPlayer.setVolume(0.4);
       await _bgmPlayer.play(AssetSource('sounds/theme.mp3'));
-      
-      // FORCE LOOP: If it stops, play it again
-      _bgmPlayer.onPlayerComplete.listen((event) {
-        _bgmPlayer.play(AssetSource('sounds/theme.mp3'));
-      });
-    } catch(e) {
-      print("BGM Error: $e");
-    }
+    } catch(e) {}
   }
 
   void _startIdleGhostTimer() {
@@ -142,7 +137,7 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
   void _spawnGhosts({int count = 6}) {
     _ghosts.clear();
     final random = Random();
-
+    // Spawn logic (Full Screen)
     for (int i = 0; i < count; i++) {
       double startX = (random.nextDouble() * 350) - 175; 
       double startY = (random.nextDouble() * 900) - 100; 
@@ -150,7 +145,6 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
       double opacity = 0.2; 
       double distance = 150.0;
       double speedMult = 0.2; 
-
       double angle = random.nextDouble() * 2 * pi;
       double endX = startX + ((random.nextDouble() * 40) - 20);
       double endY = startY - distance;
@@ -198,7 +192,6 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
       });
     }
 
-    // Start Writing Sound (Looped while writing)
     try {
       await _sfxPlayer.setReleaseMode(ReleaseMode.loop);
       await _sfxPlayer.play(AssetSource('sounds/scribble.mp3'));
@@ -207,10 +200,9 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
     _controller.reset();
     await _controller.forward();
     
-    // Stop Writing Sound
     try { 
       await _sfxPlayer.stop(); 
-      await _sfxPlayer.setReleaseMode(ReleaseMode.stop); // Reset release mode
+      await _sfxPlayer.setReleaseMode(ReleaseMode.stop); 
     } catch(e) {}
     
     await Future.delayed(Duration(milliseconds: 500)); 
@@ -242,7 +234,6 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
         child: Stack(
           children: [
             Positioned.fill(child: CustomPaint(painter: NotebookPainter(lineHeight: _lineHeight))),
-            
             Positioned(
               top: 20, left: 0, right: 0,
               child: Center(
@@ -254,9 +245,6 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
                       color: Colors.red.withOpacity(0.1),
                       border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
                       borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(color: Colors.red.withOpacity(0.2), blurRadius: 10, spreadRadius: 2)
-                      ]
                     ),
                     child: Text(
                       "ENTER YOUR NAME IN CHAT TO ENTER THE DEATH NOTE...",
@@ -310,6 +298,8 @@ class _DeathNoteAreaState extends State<DeathNoteArea> with TickerProviderStateM
           ),
         ),
 
+        // TEXT COLUMN - ALIGNED TO TOP
+        // This ensures text starts at the top and flows down
         Positioned(
           top: _startTopPosition, 
           left: 0, right: 0,
@@ -395,7 +385,8 @@ class NotebookPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.white.withOpacity(0.08)..strokeWidth = 1;
-    for (double i = 40; i < size.height; i += 40) {
+    // Matches the text offset (60 padding + 60 line height)
+    for (double i = 80 + lineHeight; i < size.height; i += lineHeight) {
       canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
     }
   }

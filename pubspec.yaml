@@ -10,21 +10,17 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # Core Logic
   provider: ^6.1.2
   http: ^1.2.0
-  
-  # Media
   file_picker: ^8.3.0
   video_player: ^2.8.2
   audioplayers: ^5.2.1
-  
-  # UI & Visuals
   flutter_svg: ^2.0.10
   google_fonts: ^6.1.0
-  
-  # System
   permission_handler: ^11.3.0
+  
+  # REPLACED: wakelock -> wakelock_plus to fix version conflict
+  wakelock_plus: ^1.2.0 
 
 dev_dependencies:
   flutter_test:

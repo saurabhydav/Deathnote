@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'providers/app_state.dart';
-
-// --- THIS IS THE MISSING LINE ---
-import 'screens/home_screen.dart'; 
+import 'package:deathnote_streamer/providers/app_state.dart';
+import 'package:deathnote_streamer/screens/home_screen.dart'; 
 
 void main() {
   runApp(MyApp());
@@ -13,12 +11,7 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Lock Orientation
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-
-    // Transparent Status Bar
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
@@ -33,7 +26,7 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: Colors.black,
           primaryColor: Colors.red,
         ),
-        home: HomeScreen(), // This works because of the import above
+        home: HomeScreen(), 
       ),
     );
   }
